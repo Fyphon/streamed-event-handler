@@ -1,0 +1,157 @@
+[General]
+# The number of calls to be generated per second.
+# This is the target rate but can be overridden by the busyhour control detailed below.
+numCallsPerSec=20
+#numCallsPerSec=15670 # Performace test rate
+
+# when unsure of the hardware capabilities, S3 can be configured to start slowly and
+# speed up to the highest sustainable rate less than or equal to 'numCallsPerSec' by
+# setting an initial value to start at. This system will then try to increase this value by 20%
+# every 10 seconds while it remains stable.
+initCallsPerSec=15
+#initCallsPerSec=9000 # Performace test rate
+
+# Number of channels to open - each channel relates to an eNodeB and
+# will result in a connection being made to the destination.
+NumChannels=1
+
+#FirstChannel allows you to skip some channels when running in a multi-instance mode
+FirstChannel=1
+
+# TraceRacUeRef > 0 tells S3 to start the RacUeRef at this value and increment it by one for each session.
+# useful for traceing events and sessions etc.
+# if zero or undefined, a random value will be used to populate the EVENT_PARAM_RAC_UE_REF field.
+TraceRacUeRef=1
+
+# 
+# UseTopologyList
+#
+#  By default, S3 will get its topology from the files in the topology directory.  
+#  This can be overridden by specifying a csv with the minimal information required. 
+#  The first none comment line will contain the mcc,mnc to use
+#  each following none comment line will have the eNodB name, the eNodeB id, the number of cells.
+#  The numChannels and FirstChannel parameters still apply  
+#UseTopologyList="etc/topologyFile.txt"
+
+# How often to schedule transmissions, in millisecs.
+DistMonitor=126
+
+# set to 1 to use virtualIPs, default 0 will use ephemeral ports and will not bind a source to the connection
+DistributionType=0
+
+# default port to use when virtual IPs are in use
+VirtualPort=12300
+
+# set to 1 to send enode name in the TCP header. enode Name will be set to attribute NE_USER_LABEL. default 0 will keep the attribute empty
+SetEnodeName=1
+
+NumIMSIs=10000  #Not required for CTR data generation
+MinIMSI=123000000
+
+# To send all output to file...
+#LogToFile=1
+
+# number of timeslots in scheduler queue. 
+# multiply by DistMonitor to get length of q in millisecs, which must be greater then longest expected call.
+# QueueSize=10000
+
+# RunFor, if present and not zero is time (in seconds) to run for.
+# after which, it will stop generating new calls and wait for
+# cooldown=1250		
+# =((DistMonitor*QueueSize)/1000) seconds for already scheduled events to be sent. 
+RunFor=60
+cooldown=45
+
+#
+# busy hour control
+#
+# On the hour(local time), S3 will check if there is a setting here for that hour 
+# and if there is, it will change the target number of calls per second by the 
+# specified percentage. i.e. at 1 in the morning, if there is a value for hour1=33, 
+# the rate will be adjusted to 33% of the NumCallsPerSec value.
+#
+# Note - a value of zero means DO NOT CHANGE the current rate. This allows rates to be
+# specified that have no impact and so can be overridden on the command line.
+#
+#hour1=33 # starting from 1 am, the call rate is 33% numCallsPerSec
+#hour8=100 # starting from 8 am, the call rate is 100% numCallsPerSec
+#hour11=33 # starting from 11 am, the call rate is 33% numCallsPerSec
+#hour16=100 # starting from 4 pm, the call rate is 110% numCallsPerSec
+#hour19=33 # starting from 7 pm, the call rate is 33% numCallsPerSec
+
+#
+# LoadControlFile
+#
+# This mechanism allows external processes to change the load being produced by S3.
+# If set, S3 will monitor the named file and if it is detected and it contains 
+# a number, then S3 will attempt to change the numCallsPerSec by that percentage
+# such that TargetCallsPerSec = NumCallsPerSec * (adjust * 0.01)
+# S3 will only look for the file once every ten seconds. 
+# S3 will delete the file after it has read it but will not act on the file if 
+# the delete fails or the current load is not stable.
+# This mechansim overrides any busy hour adjustment. 
+# Example: 
+# Given 
+# LoadControlFile="/tmp/loadControl.myInst"
+# the command "$ echo 120 > /tmp/loadControl.myInst"
+# would cause S3 to run at 120% of the numCallsPerSec
+LoadControlFile="/tmp/loadControl.myInst"
+
+#
+# Call duration rules setup
+#
+# Up to 99 rules numbered Duration1 to Duration99
+# that give the length of the call and the number of calls of that length
+# call length at least 1
+# Only first 1000 call rules will be used.
+# NOTE : At least one duration rule is required.
+Duration1=1,195   # 192 calls of 1 second
+Duration2=2,146   # 144 calls of 2 seconds
+Duration3=5,98     # 96 calls of 5 seconds
+Duration4=10,98
+Duration5=12,81
+Duration6=15,293
+Duration7=20,63
+Duration8=35,6
+
+#
+# Calls with invalid ENBS1APIDs for some events
+#
+# corruptCallRatio=1000 # implies one call in a thousand will have an invalid enbs1apid 
+#  (default is zero which means do nothing.) 
+# Up to nine events can be specified
+# If the specified event exists in the call, its enbs1apid will be set to invalid. 
+# You can specify name or code. ie   
+# corruptCallEvent1=X2_HANDOVER_REQUEST 
+# corruptCallEvent2=X2_HANDOVER_REPORT
+# is the same as 
+# corruptCallEvent1=2058 
+# corruptCallEvent2=2070
+#
+# For test purposes, running S3 in -lt mode and specifying the -s1id flag will show a count of the invalid enbS1Apid's received 
+#corruptCallRatio=5000
+#corruptCallEvent1=S1_HANDOVER_REQUEST
+#corruptCallEvent2=X2_HANDOVER_REQUEST
+#corruptCallEvent3=X2_CONTEXT_FETCH_RESPONSE
+#corruptCallEvent4=S1_INITIAL_CONTEXT_SETUP_REQUEST
+#corruptCallEvent5=INTERNAL_PER_RADIO_UE_MEASUREMENT
+#corruptCallEvent6=INTERNAL_PER_UE_RB_TRAFFIC_REP
+#corruptCallEvent7=INTERNAL_PER_UE_TRAFFIC_REP
+#corruptCallEvent8=INTERNAL_PROC_RRC_CONNECTION_RE_ESTABLISHMENT
+#corruptCallEvent9=INTERNAL_PROC_RRC_CONN_SETUP
+
+[Paths]
+IPFile = "etc/IPFile.dat"
+# Specify the pattern and times used per cycle
+# eg callsetup2release.pat=10
+# means the pattern is used at least ten times per cycle
+# total number of patterns in a cycle is the sum of the
+# times used
+
+# directory containing patterns to use
+PatternDir="patterns/newToolPatterns"
+
+# Pattern configurations can be maintained in separate ini file as below. S3 will look for the file in the specified "PatternDir"
+# and load the patterns along with patterns listed in S3.ini file.
+# For example : 
+PatternINIFileName="patterns.ini"

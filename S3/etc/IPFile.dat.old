@@ -1,0 +1,13 @@
+# This file identifies the local network environment.
+#
+# specify destinations
+dest=localhost,8880
+#dest=localhost,8881
+#dest=localhost,8882
+#dest=localhost,8883
+#dest=localhost,8884
+#dest=localhost,8885
+#dest=localhost,8886
+#dest=localhost,8887
+ctum=localhost,8888
+#ctum=localhost,8889

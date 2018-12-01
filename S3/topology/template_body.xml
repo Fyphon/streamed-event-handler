@@ -1,0 +1,35 @@
+<!-- body template from S3 -->
+
+  <mo fdn="SubNetwork=ONRM_ROOT_MO_R,MeContext=$ENODEBNAME$,ManagedElement=1,ENodeBFunction=1,$CELLTYPE$=$CELLNAME$" mimName="ERBS_NODE_MODEL" lastModified="1405509189886" >
+    <attr name="userLabel">$CELLNAME$</attr>
+    <attr name="$CELLTYPE$Id">$CELLNAME$</attr>
+    <attr name="cellId">$CELLID$</attr>
+    <attr name="earfcndl">5780</attr>
+    <attr name="earfcnul">23780</attr>
+    <attr name="sectorCarrierRef">
+      <seq count="1">
+        <item>SubNetwork=ONRM_ROOT_MO_R,MeContext=$ENODEBNAME$,ManagedElement=1,ENodeBFunction=1,SectorCarrier=2</item>
+      </seq>
+    </attr>
+    <attr name="tac">1032</attr>
+    <attr name="lastModification">1</attr>
+    <attr name="physicalLayerSubCellId">1</attr>
+    <attr name="physicalLayerCellIdGroup">122</attr>
+    <attr name="activePlmnList">
+      <seq count="1">
+        <item>
+          <struct>
+            <attr name="mcc">$MCC$</attr>
+            <attr name="mnc">$MNC$</attr>
+            <attr name="mncLength">$MNCLEN$</attr>
+          </struct>
+        </item>
+      </seq>
+    </attr>
+    <attr name="freqBand">1</attr>
+    <attr name="additionalFreqBandList">
+      <seq count="0"/>
+    </attr>
+    <attr name="timestampOfChange">2013-12-16 15:23:14.000</attr>
+    <attr name="hostingDigitalUnit">SubNetwork=ONRM_ROOT_MO_R,MeContext=$ENODEBNAME$,ManagedElement=1,Equipment=1,Subrack=1,Slot=1,PlugInUnit=1</attr>
+  </mo>
