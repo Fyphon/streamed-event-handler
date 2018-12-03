@@ -24,7 +24,7 @@ import socket
 import logging
 from queue import Queue
 from configparser import ConfigParser, ParsingError, ExtendedInterpolation
-import threading
+
 import utils.defaults as LTEdefaults
 from utils.controlServer import ControlServer
 from utils.msgTypes import LTEMsgTypes
@@ -43,6 +43,7 @@ class Model():
         self.host = 'localhost'
         self.port = LTEdefaults.cbPort
         self.changedCnt = 0  # incremented when fu's are added or removed
+        self.oldChangeCnt = 0
         logging.info('starting')
         #host = LTEdefaults.cbHost
         # I am the host - What is my address?         
@@ -57,10 +58,8 @@ class Model():
         self.defaults = {}  # settings from ini file         
         if iniFileName:
             self.loadIni(iniFileName)
-        # start a thread to do stuff
+        
         self.keepAlive = True
-        t = threading.Thread(target=self.doStuff)
-        t.start()
 
     def getHost(self):
         return '{}:{}'.format(self.host,self.port)
@@ -122,11 +121,7 @@ class Model():
 
     def doStuff(self):
         '''  '''
-        
-        while self.keepAlive: 
-            if self.recvQ.empty():
-                time.sleep(1)
-                continue
+        if not self.recvQ.empty():
             (peer, msgType, msg) = self.recvQ.get()
             msgType = LTEMsgTypes(int(msgType))  # turn it back into enum
             if msgType is LTEMsgTypes.REGISTER_REQ:
@@ -206,6 +201,13 @@ class Model():
 
         return self.changedCnt
 
+    def changed(self):
+        changed = False
+        if self.oldChangeCnt != self.changedCnt:
+            changed = True
+            self.oldChangeCnt = self.changedCnt
+        return changed
+    
     def updateConfig(self, peer, attr, val):
         if peer in self.fu:
             buf = '{}={};'.format(attr,val)

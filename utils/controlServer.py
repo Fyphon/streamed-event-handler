@@ -52,7 +52,7 @@ class ControlServer:
         self.broadcastSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.broadcastSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.broadcastSocket.settimeout(0.2)
-        self.broadcastAddress = ("", LTEdefaults.broadcastPort)
+        self.broadcastAddress = ("255.255.255.255", LTEdefaults.broadcastPort)
         # Clients expect to get text "host=host_address;port=listening_port"
         # Can't use traditional ip:port because it doesn't work with IPv6
         self.listening = 'host={};port={}'.format(host,port).encode(encoding='utf_8')

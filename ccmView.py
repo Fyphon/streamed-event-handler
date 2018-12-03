@@ -1,6 +1,7 @@
 
 import tkinter as tk # python 3
 import tkinter.ttk as ttk
+import threading
 
 fuTxt = 'Connected functional Units: %d'
 class View:
@@ -58,9 +59,6 @@ class View:
         buttonCommit=tk.Button(labelframe2, height=1, width=10, text="Send", 
                     command=self.retrieve_input)
         buttonCommit.pack()
-        #buttonForce=tk.Button(labelframe2, height=1, width=10, text="Force", 
-        #            command=self.update_defaults)
-        #buttonForce.pack()
         labelframe2.pack()
 
         self.fuConfVal = tk.Label(labelframe2, text="No option selected.")
@@ -77,32 +75,30 @@ class View:
         
     def retrieve_input(self):
         ''' get text from input box '''
-        inputValue=self.futextBox.get("1.0","end-1c")
-        #print('Got txt'+inputValue)
-        fu = int(self.fuId.get().split('-')[0])
-        opt = self.opts.get()
-        self.model.updateConfig(fu, opt, inputValue)
-        
-    def update_defaults(self):
-        ''' get text from input box '''
-        inputValue=self.futextBox.get("1.0","end-1c")
-        #print('Got txt'+inputValue)
-        fu = int(self.fuId.get().split('-')[0])
-        opt = self.opts.get()
-        self.model.updateDefaults(fu, opt, inputValue)
-        
+        try:
+            fu = int(self.fuId.get().split('-')[0])
+            key = self.opts.get()
+            value=self.futextBox.get("1.0","end-1c")            
+            self.model.updateConfig(fu, key, value)
+        except ValueError:
+            pass # no FU has been selected yet
+                
     def showNumFu(self):
         ''' calls itself every 2 seconds '''
+        t = threading.Thread(target=self.model.doStuff)
+        t.start()
+
         #changed = self.model.doStuff()
         #self.updateProg()
         #if changed:
         #    self.fuDict = self.model.getFuList()
         #    self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()]  
-        #    self.numFu.config(text = fuTxt%self.model.getNumFu())        
-        self.numFu.config(text = fuTxt%self.model.getNumFu())
-        self.fuDict = self.model.getFuList()
-        self.updateProg()
-        self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()] 
+        #    self.numFu.config(text = fuTxt%self.model.getNumFu())
+        if self.model.changed():        
+            self.numFu.config(text = fuTxt%self.model.getNumFu())
+            self.fuDict = self.model.getFuList()
+            self.updateProg()
+            self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()] 
         self.frame.after(500, self.showNumFu)
                 
     def ChangeFu(self, event):
@@ -123,10 +119,13 @@ class View:
         self.model.disconnect(fu)
         
     def ChangeConf(self, event):
-        opt = self.opts.get()        
-        vall = self.attrl[opt]
-        self.futextBox.delete(1.0, tk.END)
-        self.futextBox.insert(tk.END, vall)
+        try:
+            key = self.opts.get()        
+            vall = self.attrl[key]
+            self.futextBox.delete(1.0, tk.END)
+            self.futextBox.insert(tk.END, vall)
+        except:
+            pass
         
     def updateProg(self):
         try:
