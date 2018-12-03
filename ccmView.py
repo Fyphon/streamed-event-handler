@@ -93,24 +93,31 @@ class View:
         
     def showNumFu(self):
         ''' calls itself every 2 seconds '''
-        changed = self.model.doStuff()
+        #changed = self.model.doStuff()
+        #self.updateProg()
+        #if changed:
+        #    self.fuDict = self.model.getFuList()
+        #    self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()]  
+        #    self.numFu.config(text = fuTxt%self.model.getNumFu())        
+        self.numFu.config(text = fuTxt%self.model.getNumFu())
+        self.fuDict = self.model.getFuList()
         self.updateProg()
-        if changed:
-            self.fuDict = self.model.getFuList()
-            self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()]  
-            self.numFu.config(text = fuTxt%self.model.getNumFu())
-        self.frame.after(2000, self.showNumFu)
+        self.fuChosen['values'] = ['{} - {}'.format(k,v) for k,v in self.fuDict.items()] 
+        self.frame.after(500, self.showNumFu)
                 
     def ChangeFu(self, event):
-        fu = int(self.fuId.get().split('-')[0])
-        #print(self.fuDict)
-        txtStr = """%s: %s """%(fu,self.fuDict[fu])
-        self.fuDesc.config(text = self.fuDict[fu])
-        self.attrl = self.model.getFuConfig(fu)
-        #print(self.attrl)
-        self.confChosen['values'] = list(self.attrl)
-        self.fuConfVal.config(text = txtStr)
-
+        try:
+            fu = int(self.fuId.get().split('-')[0])
+            #print(self.fuDict)
+            txtStr = """%s: %s """%(fu,self.fuDict[fu])
+            self.fuDesc.config(text = self.fuDict[fu])
+            self.attrl = self.model.getFuConfig(fu)
+            #print(self.attrl)
+            self.confChosen['values'] = list(self.attrl)
+            self.fuConfVal.config(text = txtStr)
+        except ValueError:
+            pass # no FU has been selected yet
+        
     def disconnect(self):
         fu = int(self.fuId.get().split('-')[0])
         self.model.disconnect(fu)
@@ -128,8 +135,9 @@ class View:
             if txtStr:
                 self.progRepBox.delete(1.0, tk.END)
                 self.progRepBox.insert(tk.END, txtStr)
+            return True
         except ValueError:
-            pass # no FU has been selected yet
+            return False # no FU has been selected yet
         
 class tstModel():
     def __init__(self):

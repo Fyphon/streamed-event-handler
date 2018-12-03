@@ -48,19 +48,24 @@ class ControlServer:
         self.mysel.register(fileobj=self.main_socket,
                                events=selectors.EVENT_READ,
                                data=self._on_accept)
+        # broadcast the fact that we are listening. 
+        self.broadcastSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.broadcastSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.broadcastSocket.settimeout(0.2)
+        self.broadcastAddress = ("", LTEdefaults.broadcastPort)
+        # Clients expect to get text "host=host_address;port=listening_port"
+        # Can't use traditional ip:port because it doesn't work with IPv6
+        self.listening = 'host={};port={}'.format(host,port).encode(encoding='utf_8')
+        self.broadcastSocket.sendto(self.listening, self.broadcastAddress) ## tell the world!
+        logging.info('Sending broadcast message of {} to {}'.format(self.listening,self.broadcastAddress)) 
+        # make sure we are listening locally as well!
         if host != 'localhost':
             sock = socket.socket()
-            # Avoid bind() exception: OSError: [Errno 98] Address already in use
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    
             sock.bind(('localhost', port))
             sock.listen(100)
             sock.setblocking(False)
             logging.info('Listening on {}'.format(('localhost', port)))
-            # Create the mysel object that will dispatch events. Register
-            # interest in read events, that include incoming connections.
-            # The handler method is passed in data so we can fetch it in
-            # serve_forever.
             self.mysel.register(fileobj=sock,
                                    events=selectors.EVENT_READ,
                                    data=self._on_accept)
@@ -176,12 +181,12 @@ class ControlServer:
                 logging.info('Sending {}'.format(msgType.name))
                                 
     def _run(self):
-        last_report_time = time.time()
+        last_broadcast_time = last_report_time = time.time()
         logging.info('started')
 
         while self.keepalive:
             # Wait until some registered socket becomes ready. This will block
-            # for 200 ms.
+            # for up to 200 ms.
             events = self.mysel.select(timeout=0.2)
 
             # For each new IO event, dispatch to its handler
@@ -201,6 +206,10 @@ class ControlServer:
                             self.sendQ.qsize(),
                             self.recvQ.qsize()))
                 last_report_time = cur_time
+            if cur_time - last_broadcast_time > 1:  # once a second(ish) is enough
+                self.broadcastSocket.sendto(self.listening, self.broadcastAddress) ## tell the world I am still listening!
+                last_broadcast_time = cur_time
+
 
         logging.info('ending')
 

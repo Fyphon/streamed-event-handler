@@ -52,11 +52,11 @@ class Ebs(object):
         return 0
 
     def ended(self):
-        """ has this session recieved an end event? """
+        """ has this session received an end event? """
         return self._ended
 
     def failed(self):
-        """ has this session recieved a non zero error code? """
+        """ has this session received a non zero error code? """
         return self._failed
     
     def ho(self):
@@ -64,7 +64,7 @@ class Ebs(object):
         return self._ho
     
     def started(self):
-        """ has this session recieved an end event? """
+        """ has this session received an end event? """
         return self._ended
     
 def _getTime(raw):

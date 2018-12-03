@@ -41,19 +41,23 @@ class ControlClient(object):
         # latch unto the first recieved -
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        client.bind(("", LTEdefaults.broadcastPort))
+        client.bind(("255.255.255.255", LTEdefaults.broadcastPort))
         # wait up to 3 seconds, after which try the defaults
         cbHost = config.get('cbHost')
         cbPort = int(config.get('cbPort'))
         try:
             client.settimeout(3)
-            data = client.recv(1024)
+            data, addr = client.recvfrom(1024)
+            data = data.decode(encoding='utf_8')
+            logging.info('Got broadcast of {} from {}'.format(data, addr)) 
             # expect to get text "host=host_address;port=listening_port"
             cbHost = data.split(';')[0].split('=')[1]
-            cbPort = int(data.split(';')[1].split('=')[1])  
+            cbPort = int(data.split(';')[1].split('=')[1]) 
         except socket.timeout:
+            logging.warn('Failed to get broadcast! Using defaults.')
             pass # use the defaults
         except ValueError:
+            logging.warn('Invalid broadcast! Using defaults.')
             pass # use the defaults    
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverAddress = (cbHost, cbPort)        

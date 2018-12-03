@@ -20,10 +20,11 @@ in one or more other windows
 '''
 
 import os
+import socket
 import logging
 from queue import Queue
 from configparser import ConfigParser, ParsingError, ExtendedInterpolation
-
+import threading
 import utils.defaults as LTEdefaults
 from utils.controlServer import ControlServer
 from utils.msgTypes import LTEMsgTypes
@@ -41,10 +42,10 @@ class Model():
         self.recvQ = Queue()
         self.host = 'localhost'
         self.port = LTEdefaults.cbPort
+        self.changedCnt = 0  # incremented when fu's are added or removed
         logging.info('starting')
         #host = LTEdefaults.cbHost
-        # I am the host - What is my address? 
-        import socket
+        # I am the host - What is my address?         
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             # ask the OS to open a socket (8.8.8.8 is agoogle DNS server)
             # 
@@ -56,6 +57,10 @@ class Model():
         self.defaults = {}  # settings from ini file         
         if iniFileName:
             self.loadIni(iniFileName)
+        # start a thread to do stuff
+        self.keepAlive = True
+        t = threading.Thread(target=self.doStuff)
+        t.start()
 
     def getHost(self):
         return '{}:{}'.format(self.host,self.port)
@@ -116,9 +121,12 @@ class Model():
         return None
 
     def doStuff(self):
-        ''' gets called from the GUI every second '''
-        changed = False
-        while not self.recvQ.empty():
+        '''  '''
+        
+        while self.keepAlive: 
+            if self.recvQ.empty():
+                time.sleep(1)
+                continue
             (peer, msgType, msg) = self.recvQ.get()
             msgType = LTEMsgTypes(int(msgType))  # turn it back into enum
             if msgType is LTEMsgTypes.REGISTER_REQ:
@@ -126,7 +134,7 @@ class Model():
                 self.sendQ.put((peer, LTEMsgTypes.REGISTER_ACK, str(peer)))
                 self.config[peer] = {}
                 
-                changed = True
+                self.changedCnt += 1
                 key = peer
                 if msg.startswith('LTE Stream Terminator'):
                     key = 'STAttrs'
@@ -186,7 +194,7 @@ class Model():
                     del(self.fu[peer])
                     del(self.config[peer])
                 self.numFu -= 1
-                changed = True
+                self.changedCnt += 1
 
             elif msgType is LTEMsgTypes.PROGRESS:
                 self.progRep[peer] = msg
@@ -196,7 +204,7 @@ class Model():
                     msgType.name, 
                     peer))
 
-        return changed
+        return self.changedCnt
 
     def updateConfig(self, peer, attr, val):
         if peer in self.fu:
@@ -221,6 +229,7 @@ class Model():
         for peer in self.fu:
             self.sendQ.put((peer, LTEMsgTypes.SHUTDOWN_REQ, ''))
         self.cs.shutdown(5)  # wait for cs_thread to complete
+        self.keepAlive = False
         print('Done.')
 
     def getProg(self, peer):

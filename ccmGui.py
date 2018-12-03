@@ -16,7 +16,8 @@ class Controller:
         self.root.title("Command and Control")
         self.root.deiconify()
         self.root.mainloop()
-
+        self.model.shutdown()
+        
     def cleanup(self):
         self.model.shutdown()
 
